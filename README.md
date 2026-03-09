@@ -1,1 +1,1 @@
-# Jmix Ai Chat
+# Jmix AI Chat
