@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1" author="jmix-ai-chat">
+        <createTable tableName="CONVERSATION">
+            <column name="ID" type="${uuid.type}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="TITLE" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_AT" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="jmix-ai-chat">
+        <createTable tableName="CHAT_MESSAGE">
+            <column name="ID" type="${uuid.type}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="CONVERSATION_ID" type="${uuid.type}">
+                <constraints nullable="false" foreignKeyName="FK_CHAT_MESSAGE_CONVERSATION"
+                             references="CONVERSATION(ID)"/>
+            </column>
+            <column name="ROLE_" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CONTENT" type="clob">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_AT" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="IDX_CHAT_MESSAGE_CONVERSATION"
+                     tableName="CHAT_MESSAGE">
+            <column name="CONVERSATION_ID"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
