@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: jmixaichat-db
+    environment:
+      POSTGRES_DB: jmixaichat
+      POSTGRES_USER: pgadmin
+      POSTGRES_PASSWORD: pgadmin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
