@@ -1,5 +1,7 @@
 package ru.javaboys.jmixaichat.service;
 
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -8,20 +10,16 @@ import java.time.Duration;
 @Service
 public class AiAssistantService {
 
-    public Flux<String> chat(String userMessage) {
-        String response = generateMockResponse(userMessage);
-        String[] tokens = response.split("(?<=\\s)");
+    private final ChatClient chatClient;
 
-        return Flux.fromArray(tokens)
-                .delayElements(Duration.ofMillis(50));
+    public AiAssistantService(ChatClient chatClient) {
+        this.chatClient = chatClient;
     }
 
-    private String generateMockResponse(String userMessage) {
-        return "Hello! I'm an AI assistant running on the **Jmix** platform. " +
-                "This response is being streamed token by token, " +
-                "creating a real-time typing effect similar to ChatGPT. " +
-                "In a production application, this service would be connected " +
-                "to an LLM provider like **Claude** from Anthropic. " +
-                "You can ask me anything and I'll do my best to help!";
+    public Flux<String> chat(String userMessage) {
+        return chatClient.prompt()
+                .user(userMessage)
+                .stream()
+                .content();
     }
 }
