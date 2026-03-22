@@ -3,6 +3,7 @@
 
     <menu id="application" title="msg://ru.javaboys.jmixaichat/menu.application.title" opened="true">
         <item view="User.list" title="msg://ru.javaboys.jmixaichat.view.user/UserListView.title"/>
+        <item view="AiChatView" title="Chat"/>
     </menu>
 
 </menu-config>
