@@ -203,7 +203,7 @@ public class AiChatView extends StandardView {
         var ui = event.getSource().getUI().orElseThrow();
         var responseBuilder = new StringBuilder();
 
-        aiAssistantService.chat(text)
+        aiAssistantService.chat(text, currentConversation)
                 .subscribe(
                         token -> {
                             responseBuilder.append(token);

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import reactor.core.publisher.Flux;
+import ru.javaboys.jmixaichat.entity.Conversation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,7 +16,8 @@ class AiAssistantServiceTest {
 
     @Test
     void testReturnResponseFromLlmSuccess() {
-        String result = aiAssistantService.chat("Привет! дай пример unit теста для языка java")
+        Conversation conversation = new Conversation();
+        String result = aiAssistantService.chat("Привет! дай пример unit теста для языка java", conversation)
                 .collectList()
                 .map(list -> String.join("", list))
                 .block();
