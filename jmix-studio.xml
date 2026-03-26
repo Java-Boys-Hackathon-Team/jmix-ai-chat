@@ -2,6 +2,19 @@
 <project version="4">
   <component name="JmixDataStoreSettingsManager">
     <moduleSettings>
+      <entry key="jmix-ai-chat.main">
+        <ModuleSettings>
+          <option name="dataStoreOptionsV2">
+            <map>
+              <entry key="main">
+                <value>
+                  <DataStoreSettingsV2 />
+                </value>
+              </entry>
+            </map>
+          </option>
+        </ModuleSettings>
+      </entry>
       <entry key="ru.javaboys.jmix-ai-chat.main">
         <ModuleSettings>
           <option name="dataStoreOptionsV2">
@@ -16,5 +29,8 @@
         </ModuleSettings>
       </entry>
     </moduleSettings>
+  </component>
+  <component name="JmixLiquibaseChangesConfig">
+    <exclude-change idName="spring_ai_chat_memory" tagName="dropTable" />
   </component>
 </project>
