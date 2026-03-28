@@ -1,5 +1,6 @@
 package ru.javaboys.jmixaichat.view.chat;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.messages.MessageListItem;
@@ -14,7 +15,6 @@ import ru.javaboys.jmixaichat.view.main.MainView;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Route(value = "ai-chat", layout = MainView.class)
 @ViewController(id = "AiChatView")
@@ -53,14 +53,26 @@ public class AiChatView extends StandardView {
         ChatFacade.ChatResponse chatResponse = chatFacade.chat(userMessage, conversation);
         conversation = chatResponse.conversation();
 
-        // Blocking call - collect all chunks and join
-        String aiResponse = chatResponse.response()
-                .collectList()
-                .block()
-                .stream()
-                .collect(Collectors.joining());
+        UI ui = UI.getCurrent();
+        MessageListItem aiMessage = new MessageListItem("", Instant.now(), "AI");
+        messages.add(aiMessage);
+        StringBuilder sb = new StringBuilder();
 
-        messages.add(new MessageListItem(aiResponse, Instant.now(), "AI"));
-        messageList.setItems(messages);
+        chatResponse.response()
+                .doOnNext(chunk -> {
+                    sb.append(chunk);
+                    ui.access(() -> {
+                        aiMessage.setText(sb.toString());
+                        messageList.setItems(messages);
+                    });
+                })
+                .doOnError(error -> ui.access(() -> {
+                    aiMessage.setText("Error: " + error.getMessage());
+                    messageList.setItems(messages);
+                }))
+                .doOnComplete(() -> ui.access(() -> {
+                    messageList.setItems(messages);
+                }))
+                .subscribe();
     }
 }
