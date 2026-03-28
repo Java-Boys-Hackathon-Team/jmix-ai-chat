@@ -1,9 +1,12 @@
 package ru.javaboys.jmixaichat.view.chat;
 
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.messages.MessageListItem;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import io.jmix.flowui.view.*;
@@ -30,9 +33,30 @@ public class AiChatView extends StandardView {
     private Conversation conversation;
     private final List<MessageListItem> messages = new ArrayList<>();
     private MessageList messageList;
+    private VerticalLayout conversationListPanel;
 
     @Subscribe
     public void onInit(InitEvent event) {
+        // Sidebar - conversations
+        VerticalLayout sidebar = new VerticalLayout();
+        sidebar.setWidth("280px");
+        sidebar.getStyle().set("border-right", "1px solid var(--lumo-contrast-10pct)");
+
+        Button newChatBtn = new Button("+ New Chat", e -> startNewChat());
+        newChatBtn.setWidthFull();
+        newChatBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        conversationListPanel = new VerticalLayout();
+        conversationListPanel.setPadding(false);
+        conversationListPanel.setSpacing(false);
+
+        sidebar.add(newChatBtn, conversationListPanel);
+
+        // Chat panel
+        VerticalLayout chatPanel = new VerticalLayout();
+        chatPanel.setSizeFull();
+        chatPanel.setPadding(false);
+
         messageList = new MessageList();
         messageList.setWidthFull();
         messageList.getStyle().set("flex-grow", "1");
@@ -41,7 +65,39 @@ public class AiChatView extends StandardView {
         messageInput.setWidthFull();
         messageInput.addSubmitListener(this::onSendMessage);
 
-        chatBox.add(messageList, messageInput);
+        chatPanel.add(messageList, messageInput);
+
+        // Main layout
+        HorizontalLayout mainLayout = new HorizontalLayout(sidebar, chatPanel);
+        mainLayout.setSizeFull();
+        mainLayout.setSpacing(false);
+
+        chatBox.add(mainLayout);
+
+        loadConversations();
+    }
+
+    private void loadConversations() {
+        conversationListPanel.removeAll();
+        for (Conversation conv : chatFacade.getAllConversations()) {
+            Button btn = new Button(conv.getTitle(), e -> selectConversation(conv));
+            btn.setWidthFull();
+            btn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            btn.getStyle().set("justify-content", "flex-start");
+            conversationListPanel.add(btn);
+        }
+    }
+
+    private void selectConversation(Conversation conv) {
+        this.conversation = conv;
+        this.messages.clear();
+        messageList.setItems(messages);
+    }
+
+    private void startNewChat() {
+        this.conversation = null;
+        this.messages.clear();
+        messageList.setItems(messages);
     }
 
     private void onSendMessage(MessageInput.SubmitEvent event) {
@@ -70,9 +126,7 @@ public class AiChatView extends StandardView {
                     aiMessage.setText("Error: " + error.getMessage());
                     messageList.setItems(messages);
                 }))
-                .doOnComplete(() -> ui.access(() -> {
-                    messageList.setItems(messages);
-                }))
+                .doOnComplete(() -> ui.access(this::loadConversations))
                 .subscribe();
     }
 }
