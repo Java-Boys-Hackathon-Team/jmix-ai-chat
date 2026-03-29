@@ -23,8 +23,7 @@ public class AiConfig {
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder, ChatMemory chatMemory) {
         return builder
-                .defaultAdvisors(new SimpleLoggerAdvisor())
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+                .defaultAdvisors(new SimpleLoggerAdvisor(), MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
 }
