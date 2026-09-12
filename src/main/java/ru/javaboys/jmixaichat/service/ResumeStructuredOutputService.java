@@ -42,7 +42,10 @@ public class ResumeStructuredOutputService {
 
     private static final String SENIORITY_CLASSIFICATION_SYSTEM_PROMPT = """
             Ты HR-ассистент. Оцени уровень кандидата по резюме.
-            Верни только одно enum-значение: INTERN, JUNIOR, MIDDLE, SENIOR, LEAD или UNKNOWN.
+            Верни JSON-строку с одним из значений: INTERN, JUNIOR, MIDDLE, SENIOR, LEAD или UNKNOWN.
+
+            Пример правильного ответа:
+            "JUNIOR"
             """;
 
     private final ChatClient chatClient;
