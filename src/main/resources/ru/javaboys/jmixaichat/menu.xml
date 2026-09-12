@@ -4,6 +4,7 @@
     <menu id="application" title="msg://ru.javaboys.jmixaichat/menu.application.title" opened="true">
         <item view="User.list" title="msg://ru.javaboys.jmixaichat.view.user/UserListView.title"/>
         <item view="AiChatView" title="Chat"/>
+        <item view="ResumeParserView" title="Structured output: резюме"/>
     </menu>
 
 </menu-config>
