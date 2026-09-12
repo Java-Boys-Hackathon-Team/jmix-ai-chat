@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="Разбор резюме">
+    <layout spacing="true" padding="true">
+        <vbox spacing="true" width="100%">
+            <hbox spacing="true" alignItems="END">
+                <fileStorageUploadField id="resumeUpload"
+                                        acceptedFileTypes=".pdf,.doc,.docx,.rtf,.odt,.txt,.html,.htm"
+                                        clearButtonVisible="true"
+                                        dropAllowed="true"
+                                        uploadText="Загрузить резюме"/>
+            </hbox>
+
+            <formLayout id="resumeForm" width="100%">
+                <textField id="fullNameField" label="ФИО"/>
+                <textField id="positionField" label="Желаемая позиция"/>
+                <textField id="seniorityField" label="Уровень"/>
+                <textField id="emailField" label="Email"/>
+                <textField id="phoneField" label="Телефон"/>
+                <textField id="cityField" label="Город"/>
+                <textArea id="summaryField" label="Краткое резюме" height="6em"/>
+                <textArea id="skillsField" label="Навыки" height="6em"/>
+                <textArea id="experienceField" label="Опыт" height="10em"/>
+                <textArea id="educationField" label="Образование" height="8em"/>
+            </formLayout>
+        </vbox>
+    </layout>
+</view>
