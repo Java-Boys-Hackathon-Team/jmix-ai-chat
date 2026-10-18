@@ -40,6 +40,7 @@ public class JmixAiChatSecurityConfiguration {
     @Order(JmixSecurityFilterChainOrder.CUSTOM)
     SecurityFilterChain publicFilterChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/public/**")
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize ->
                         authorize.anyRequest().permitAll()
                 );

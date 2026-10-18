@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1018">
+  <meta name="description" content="Интерактивная демонстрация: текст превращается в embeddings, а векторы сравниваются метриками.">
+  <title>Embedding Lab — от строк к векторам</title>
+  <link rel="stylesheet" href="embeddings.css?v=20261018-1">
+</head>
+<body>
+  <a class="skip-link" href="#phrases">К демонстрации</a>
+
+  <header class="labbar">
+    <a class="lab-brand" href="#top" aria-label="Embedding Lab">
+      <span class="lab-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>EMBEDDING LAB</span>
+      <small>координаты смысла</small>
+    </a>
+
+    <nav class="stage-nav" aria-label="Этапы демонстрации">
+      <a class="active" href="#phrases" data-stage-link="1"><b>01</b><span>Фразы</span></a>
+      <a href="#vectors" data-stage-link="2"><b>02</b><span>Векторы</span></a>
+      <a href="#metrics" data-stage-link="3"><b>03</b><span>Метрики</span></a>
+    </nav>
+
+    <div class="runtime-badge" id="runtime-badge"><i></i><span>готово к запросу</span></div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <h1 id="page-title">Как модель <em>раскладывает смысл</em> по числам</h1>
+        <p>Embedding-модель превращает строку в точку многомерного пространства. Похожие смыслы оказываются рядом — и это можно измерить.</p>
+      </div>
+      <div class="hero-visual" role="img" aria-label="Упрощённая схема: строка проходит через embedding-модель и превращается в вектор чисел">
+        <div class="visual-input">
+          <small>INPUT · TEXT</small>
+          <strong>«Как оформить<br>отпуск сотруднику?»</strong>
+        </div>
+        <div class="visual-flow" aria-hidden="true"><i></i><span>токены</span><i></i></div>
+        <div class="visual-model">
+          <span>EMBEDDING</span>
+          <strong>MODEL</strong>
+          <div aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="visual-flow" aria-hidden="true"><i></i><span>координаты</span><i></i></div>
+        <div class="visual-vector">
+          <small>OUTPUT · VECTOR [N]</small>
+          <div><b>[</b><ol><li>−0.0184</li><li>+0.7421</li><li>−0.2307</li><li>+0.0916</li><li class="ellipsis">⋮</li><li>+0.3142</li></ol><b>]</b></div>
+        </div>
+        <p>Каждое число — одна координата смысла</p>
+      </div>
+    </section>
+
+    <section class="lab-stage phrases-stage" id="phrases" data-stage="1">
+      <header class="stage-heading stage-heading--stacked">
+        <div>
+          <h2>Три фразы</h2>
+          <p>A и B говорят об одном разными словами. C специально уводит смысл в другую область.</p>
+        </div>
+      </header>
+
+      <div class="phrase-grid">
+        <label class="phrase-card phrase-card--close" for="phrase-a">
+          <span class="phrase-meta"><b>A</b><i>Исходный запрос</i></span>
+          <textarea id="phrase-a" maxlength="1000">Как оформить отпуск сотруднику?</textarea>
+        </label>
+        <label class="phrase-card phrase-card--close" for="phrase-b">
+          <span class="phrase-meta"><b>B</b><i>Переформулировка</i></span>
+          <textarea id="phrase-b" maxlength="1000">Какие документы нужны работнику для ухода в отпуск?</textarea>
+        </label>
+        <label class="phrase-card phrase-card--far" for="phrase-c">
+          <span class="phrase-meta"><b>C</b><i>Другая тема</i></span>
+          <textarea id="phrase-c" maxlength="1000">Как настроить подключение к PostgreSQL?</textarea>
+        </label>
+      </div>
+
+      <div class="stage-action">
+        <p><b>Реальный вызов.</b> Три строки уйдут в embedding API одним batch-запросом.</p>
+        <button class="primary-button" id="embed-button" type="button"><span>Получить embeddings</span><b>→</b></button>
+      </div>
+      <div class="error-message" id="error-message" role="alert" hidden></div>
+    </section>
+
+    <section class="lab-stage vectors-stage" id="vectors" data-stage="2" hidden>
+      <header class="stage-heading">
+        <div><h2>Строки стали векторами</h2></div>
+        <p><b>Heatmap, или тепловая карта,</b> — это способ показать длинный числовой вектор цветной полосой: каждая ячейка соответствует одной координате, а цвет показывает её знак и величину. Она нужна, чтобы выровнять embeddings по одинаковым координатам и увидеть, где их числовые «отпечатки» похожи, а где отличаются.</p>
+      </header>
+      <div class="model-strip" id="model-strip"></div>
+      <div class="vector-list" id="vector-list"></div>
+      <div class="stage-action compact-action">
+        <p><b>Дальше без API.</b> Метрики посчитает JavaScript прямо в браузере.</p>
+        <button class="primary-button" id="compare-button" type="button"><span>Сравнить векторы</span><b>→</b></button>
+      </div>
+    </section>
+
+    <section class="lab-stage metrics-stage" id="metrics" data-stage="3" hidden>
+      <header class="stage-heading">
+        <div><h2>Четыре взгляда на близость</h2></div>
+        <p>Метрика определяет, что именно считать «рядом»: одинаковое направление или малое расстояние между координатами.</p>
+      </header>
+
+      <div class="formula-grid" aria-label="Формулы метрик">
+        <article>
+          <div class="metric-definition"><h3>Cosine similarity</h3><code>cos(A,B) = (A · B) / (‖A‖ × ‖B‖)</code></div>
+          <div class="metric-copy"><b>Что измеряет</b><p>Угол между векторами. Длина векторов не влияет.</p></div>
+          <div class="metric-copy"><b>Где используют</b><p>Семантический поиск, RAG, поиск дублей и похожих текстов.</p></div>
+          <div class="metric-rule"><span>↑</span><div><small>Интерпретация</small><strong>Чем больше, тем ближе</strong></div></div>
+        </article>
+        <article>
+          <div class="metric-definition"><h3>Dot product</h3><code>A · B = Σ AᵢBᵢ</code></div>
+          <div class="metric-copy"><b>Что измеряет</b><p>Одновременно направление и длину векторов.</p></div>
+          <div class="metric-copy"><b>Где используют</b><p>Ранжирование в vector store и рекомендательных системах, если модель обучена под inner product.</p></div>
+          <div class="metric-rule"><span>↑</span><div><small>Интерпретация</small><strong>Чем больше, тем ближе</strong></div></div>
+        </article>
+        <article>
+          <div class="metric-definition"><h3>Euclidean distance · L2</h3><code>d₂(A,B) = √Σ(Aᵢ−Bᵢ)²</code></div>
+          <div class="metric-copy"><b>Что измеряет</b><p>Прямое геометрическое расстояние между двумя точками.</p></div>
+          <div class="metric-copy"><b>Где используют</b><p>Поиск ближайших соседей, кластеризация и поиск аномалий, когда важно именно расстояние.</p></div>
+          <div class="metric-rule"><span>↓</span><div><small>Интерпретация</small><strong>Чем меньше, тем ближе</strong></div></div>
+        </article>
+        <article>
+          <div class="metric-definition"><h3>Manhattan distance · L1</h3><code>d₁(A,B) = Σ|Aᵢ−Bᵢ|</code></div>
+          <div class="metric-copy"><b>Что измеряет</b><p>Сумму абсолютных разниц по всем координатам.</p></div>
+          <div class="metric-copy"><b>Где используют</b><p>Разреженные признаки и задачи, где нужно снизить влияние отдельных больших отклонений; для embeddings применяется реже.</p></div>
+          <div class="metric-rule"><span>↓</span><div><small>Интерпретация</small><strong>Чем меньше, тем ближе</strong></div></div>
+        </article>
+      </div>
+
+      <div class="result-layout">
+        <section class="metric-table-panel">
+          <div class="panel-heading"><strong>Три пары векторов</strong></div>
+          <div class="metric-table" id="metric-table"></div>
+        </section>
+        <section class="map-panel">
+          <div class="panel-heading"><strong>Карта смыслов</strong></div>
+          <div class="semantic-map" id="semantic-map"></div>
+          <p class="map-note">Карта сжимает многомерные cosine-расстояния до двух осей.</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>EMBEDDING LAB</span><p>Следующая тема: как из этих векторов собирается RAG-пайплайн.</p></footer>
+  <script src="embeddings.js?v=20261018-1"></script>
+</body>
+</html>
