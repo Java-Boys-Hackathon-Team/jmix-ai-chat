@@ -7,24 +7,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.javaboys.jmixaichat.service.EmbeddingDemoService;
-import ru.javaboys.jmixaichat.service.EmbeddingDemoService.EmbeddingAnalysis;
+import ru.javaboys.jmixaichat.service.EmbeddingService;
+import ru.javaboys.jmixaichat.service.EmbeddingService.EmbeddingAnalysis;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/public/api/embeddings")
-public class EmbeddingDemoController {
+public class EmbeddingController {
 
-    private final EmbeddingDemoService embeddingDemoService;
+    private final EmbeddingService embeddingService;
 
-    public EmbeddingDemoController(EmbeddingDemoService embeddingDemoService) {
-        this.embeddingDemoService = embeddingDemoService;
+    public EmbeddingController(EmbeddingService embeddingService) {
+        this.embeddingService = embeddingService;
     }
 
     @PostMapping
     public EmbeddingAnalysis embed(@RequestBody EmbeddingRequest request) {
-        return embeddingDemoService.embed(request.texts());
+        return embeddingService.embed(request.texts());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

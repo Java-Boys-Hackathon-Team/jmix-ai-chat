@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1" author="jmix-ai-chat" dbms="postgresql">
+        <sql>CREATE EXTENSION IF NOT EXISTS vector</sql>
+    </changeSet>
+
+    <changeSet id="2" author="jmix-ai-chat" dbms="postgresql">
+        <sql>
+            CREATE TABLE EMBEDDING_DOCUMENT (
+                ID UUID PRIMARY KEY,
+                COLLECTION VARCHAR(100) NOT NULL,
+                LABEL VARCHAR(20) NOT NULL,
+                CONTENT TEXT NOT NULL,
+                EMBEDDING vector(1536) NOT NULL,
+                MODEL VARCHAR(255) NOT NULL,
+                CREATED_AT TIMESTAMP NOT NULL
+            )
+        </sql>
+        <rollback>DROP TABLE EMBEDDING_DOCUMENT</rollback>
+    </changeSet>
+
+    <changeSet id="3" author="jmix-ai-chat" dbms="postgresql">
+        <sql>
+            CREATE INDEX IDX_EMBEDDING_DOCUMENT_COSINE
+                ON EMBEDDING_DOCUMENT
+                USING hnsw (EMBEDDING vector_cosine_ops)
+        </sql>
+        <rollback>DROP INDEX IDX_EMBEDDING_DOCUMENT_COSINE</rollback>
+    </changeSet>
+
+    <changeSet id="4" author="jmix-ai-chat" dbms="postgresql">
+        <createIndex indexName="IDX_EMBEDDING_DOCUMENT_COLLECTION_MODEL"
+                     tableName="EMBEDDING_DOCUMENT">
+            <column name="COLLECTION"/>
+            <column name="MODEL"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

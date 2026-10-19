@@ -2,9 +2,15 @@ const labels = ['A', 'B', 'C'];
 const fields = labels.map((label) => document.querySelector(`#phrase-${label.toLowerCase()}`));
 const embedButton = document.querySelector('#embed-button');
 const compareButton = document.querySelector('#compare-button');
+const storeButton = document.querySelector('#store-button');
+const searchForm = document.querySelector('#vector-search-form');
+const searchButton = document.querySelector('#search-button');
 const vectorSection = document.querySelector('#vectors');
 const metricsSection = document.querySelector('#metrics');
+const storeSection = document.querySelector('#store');
 const errorMessage = document.querySelector('#error-message');
+const storeError = document.querySelector('#store-error');
+const searchError = document.querySelector('#search-error');
 const runtimeBadge = document.querySelector('#runtime-badge');
 let analysis = null;
 
@@ -24,9 +30,13 @@ function setStatus(text, state = '') {
 
 function activateStage(number) {
   document.querySelectorAll('[data-stage-link]').forEach((link) => {
-    link.classList.toggle('active', Number(link.dataset.stageLink) === number);
-    link.classList.toggle('locked', Number(link.dataset.stageLink) > number &&
-      (Number(link.dataset.stageLink) === 2 ? !analysis : metricsSection.hidden));
+    const target = Number(link.dataset.stageLink);
+    const unlocked = target === 1 ||
+      (target === 2 && analysis) ||
+      (target === 3 && !metricsSection.hidden) ||
+      (target === 4 && !storeSection.hidden);
+    link.classList.toggle('active', target === number);
+    link.classList.toggle('locked', !unlocked);
   });
 }
 
@@ -34,7 +44,12 @@ function resetResults() {
   analysis = null;
   vectorSection.hidden = true;
   metricsSection.hidden = true;
+  storeSection.hidden = true;
   errorMessage.hidden = true;
+  storeError.hidden = true;
+  searchError.hidden = true;
+  document.querySelector('#search-results').innerHTML = '';
+  document.querySelector('#search-empty').hidden = false;
   embedButton.querySelector('span').textContent = 'Получить embeddings';
   setStatus('фразы изменены');
   activateStage(1);
@@ -53,6 +68,7 @@ embedButton.addEventListener('click', async () => {
   embedButton.querySelector('span').textContent = 'Модель строит векторы…';
   errorMessage.hidden = true;
   metricsSection.hidden = true;
+  storeSection.hidden = true;
   setStatus('запрос к embedding-модели');
 
   try {
@@ -88,6 +104,106 @@ compareButton.addEventListener('click', () => {
   setStatus('метрики посчитаны локально', 'ready');
   requestAnimationFrame(() => metricsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 });
+
+storeButton.addEventListener('click', async () => {
+  if (!analysis) return;
+
+  storeButton.disabled = true;
+  storeButton.querySelector('span').textContent = 'Сохраняем в PostgreSQL…';
+  storeError.hidden = true;
+  setStatus('запись в pgvector');
+
+  try {
+    const response = await fetch('/public/api/vector-store/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: analysis.model,
+        dimensions: analysis.dimensions,
+        vectors: analysis.vectors.map((vector) => ({
+          label: vector.label,
+          content: vector.text,
+          values: vector.values,
+        })),
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(await responseError(response));
+    }
+    const stored = await response.json();
+    document.querySelector('#stored-count').textContent = `${stored.stored} строки`;
+    storeSection.hidden = false;
+    activateStage(4);
+    setStatus(`${stored.stored} вектора сохранены`, 'ready');
+    requestAnimationFrame(() => storeSection.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  } catch (error) {
+    storeError.textContent = `Не удалось сохранить векторы: ${error.message}`;
+    storeError.hidden = false;
+    setStatus('ошибка pgvector', 'error');
+  } finally {
+    storeButton.disabled = false;
+    storeButton.querySelector('span').textContent = storeSection.hidden ? 'Сохранить в pgvector' : 'Перезаписать коллекцию';
+  }
+});
+
+searchForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const query = document.querySelector('#search-query').value.trim();
+  if (!query) {
+    searchError.textContent = 'Введите поисковый запрос.';
+    searchError.hidden = false;
+    return;
+  }
+
+  searchButton.disabled = true;
+  searchButton.querySelector('span').textContent = 'Ищем ближайшие…';
+  searchError.hidden = true;
+  setStatus('поиск в pgvector');
+
+  try {
+    const response = await fetch('/public/api/vector-store/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, limit: 3 }),
+    });
+    if (!response.ok) {
+      throw new Error(await responseError(response));
+    }
+    const result = await response.json();
+    renderSearchResults(result.matches);
+    setStatus('поиск выполнен в PostgreSQL', 'ready');
+  } catch (error) {
+    searchError.textContent = `Не удалось выполнить поиск: ${error.message}`;
+    searchError.hidden = false;
+    setStatus('ошибка поиска', 'error');
+  } finally {
+    searchButton.disabled = false;
+    searchButton.querySelector('span').textContent = 'Найти похожие';
+  }
+});
+
+async function responseError(response) {
+  const body = await response.json().catch(() => ({}));
+  return body.detail || body.message || `HTTP ${response.status}`;
+}
+
+function renderSearchResults(matches) {
+  const empty = document.querySelector('#search-empty');
+  const results = document.querySelector('#search-results');
+  if (!matches.length) {
+    empty.textContent = 'В коллекции нет записей для этой embedding-модели.';
+    empty.hidden = false;
+    results.innerHTML = '';
+    return;
+  }
+  empty.hidden = true;
+  results.innerHTML = matches.map((match, index) => `
+    <article class="search-result">
+      <span class="search-result__rank">#${index + 1}</span>
+      <div class="search-result__copy"><b>${escapeHtml(match.label)}</b><span>${escapeHtml(match.content)}</span></div>
+      <div class="search-result__score"><strong>${format(match.similarity)}</strong><small>cosine similarity</small></div>
+    </article>`).join('');
+}
 
 function showError(message) {
   errorMessage.textContent = message;

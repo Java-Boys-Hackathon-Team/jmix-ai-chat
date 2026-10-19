@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d1018">
   <meta name="description" content="Интерактивная демонстрация: текст превращается в embeddings, а векторы сравниваются метриками.">
   <title>Embedding Lab — от строк к векторам</title>
-  <link rel="stylesheet" href="embeddings.css?v=20261018-1">
+  <link rel="stylesheet" href="embeddings.css?v=20261019-1">
 </head>
 <body>
   <a class="skip-link" href="#phrases">К демонстрации</a>
@@ -22,6 +22,7 @@
       <a class="active" href="#phrases" data-stage-link="1"><b>01</b><span>Фразы</span></a>
       <a href="#vectors" data-stage-link="2"><b>02</b><span>Векторы</span></a>
       <a href="#metrics" data-stage-link="3"><b>03</b><span>Метрики</span></a>
+      <a href="#store" data-stage-link="4"><b>04</b><span>pgvector</span></a>
     </nav>
 
     <div class="runtime-badge" id="runtime-badge"><i></i><span>готово к запросу</span></div>
@@ -102,27 +103,73 @@
         <p>Метрика определяет, что именно считать «рядом»: одинаковое направление или малое расстояние между координатами.</p>
       </header>
 
+      <div class="metric-example" aria-label="Два двумерных вектора для примеров">
+        <div>
+          <strong>Один пример для всех схем</strong>
+          <p>У настоящего embedding сотни или тысячи координат. Здесь оставим две, чтобы формулы можно было увидеть на плоскости.</p>
+        </div>
+        <code>A = (Aₓ, Aᵧ) = (2, 1)</code>
+        <code>B = (Bₓ, Bᵧ) = (5, 4)</code>
+      </div>
+
       <div class="formula-grid" aria-label="Формулы метрик">
         <article>
-          <div class="metric-definition"><h3>Cosine similarity</h3><code>cos(A,B) = (A · B) / (‖A‖ × ‖B‖)</code></div>
+          <div class="metric-visual">
+            <svg viewBox="0 0 200 130" role="img" aria-label="Cosine similarity — угол между векторами A и B">
+              <path class="metric-axis" d="M24 108H188M24 108V10"/>
+              <path class="metric-vector metric-vector-a" d="M24 108L64 88"/>
+              <path class="metric-vector metric-vector-b" d="M24 108L124 28"/>
+              <path class="metric-angle" d="M55 92A35 35 0 0 0 51 86"/>
+              <circle class="metric-point-a" cx="64" cy="88" r="4"/><circle class="metric-point-b" cx="124" cy="28" r="4"/>
+              <text class="metric-label-a" x="69" y="91">A(2,1)</text><text class="metric-label-b" x="130" y="29">B(5,4)</text><text class="metric-theta" x="44" y="84">θ</text>
+            </svg>
+            <p>Сравниваем угол θ</p>
+          </div>
+          <div class="metric-definition"><h3>Cosine similarity</h3><code>cos(A,B) = (AₓBₓ + AᵧBᵧ) / (√(Aₓ² + Aᵧ²) × √(Bₓ² + Bᵧ²))</code><code class="metric-calculation">= (2×5 + 1×4) / (√5 × √41) ≈ 0,978</code></div>
           <div class="metric-copy"><b>Что измеряет</b><p>Угол между векторами. Длина векторов не влияет.</p></div>
           <div class="metric-copy"><b>Где используют</b><p>Семантический поиск, RAG, поиск дублей и похожих текстов.</p></div>
           <div class="metric-rule"><span>↑</span><div><small>Интерпретация</small><strong>Чем больше, тем ближе</strong></div></div>
         </article>
         <article>
-          <div class="metric-definition"><h3>Dot product</h3><code>A · B = Σ AᵢBᵢ</code></div>
+          <div class="metric-visual">
+            <svg viewBox="0 0 200 130" role="img" aria-label="Dot product — проекция одного вектора на другой">
+              <path class="metric-axis" d="M24 108H188M24 108V10"/>
+              <path class="metric-vector metric-vector-a" d="M24 108L64 88"/><path class="metric-guide" d="M24 108L152 44"/>
+              <path class="metric-vector metric-vector-b" d="M24 108L124 28"/><path class="metric-projection" d="M124 28L136 52"/>
+              <circle class="metric-point-a" cx="64" cy="88" r="4"/><circle class="metric-point-b" cx="124" cy="28" r="4"/>
+              <text class="metric-label-a" x="69" y="93">A(2,1)</text><text class="metric-label-b" x="130" y="29">B(5,4)</text><text class="metric-projection-label" x="102" y="57">проекция</text>
+            </svg>
+            <p>Направление × длина</p>
+          </div>
+          <div class="metric-definition"><h3>Dot product</h3><code>A · B = AₓBₓ + AᵧBᵧ</code><code class="metric-calculation">= 2×5 + 1×4 = 14</code></div>
           <div class="metric-copy"><b>Что измеряет</b><p>Одновременно направление и длину векторов.</p></div>
           <div class="metric-copy"><b>Где используют</b><p>Ранжирование в vector store и рекомендательных системах, если модель обучена под inner product.</p></div>
           <div class="metric-rule"><span>↑</span><div><small>Интерпретация</small><strong>Чем больше, тем ближе</strong></div></div>
         </article>
         <article>
-          <div class="metric-definition"><h3>Euclidean distance · L2</h3><code>d₂(A,B) = √Σ(Aᵢ−Bᵢ)²</code></div>
+          <div class="metric-visual">
+            <svg viewBox="0 0 200 130" role="img" aria-label="Euclidean distance — прямая между точками A и B">
+              <path class="metric-axis" d="M24 108H188M24 108V10"/><path class="metric-distance" d="M64 88L124 28"/>
+              <circle class="metric-point-a" cx="64" cy="88" r="5"/><circle class="metric-point-b" cx="124" cy="28" r="5"/>
+              <text class="metric-label-a" x="35" y="91">A(2,1)</text><text class="metric-label-b" x="131" y="30">B(5,4)</text><text class="metric-distance-label" x="86" y="53">L2</text>
+            </svg>
+            <p>Идём напрямую</p>
+          </div>
+          <div class="metric-definition"><h3>Euclidean distance · L2</h3><code>d₂(A,B) = √((Aₓ−Bₓ)² + (Aᵧ−Bᵧ)²)</code><code class="metric-calculation">= √((2−5)² + (1−4)²) = √18 ≈ 4,243</code></div>
           <div class="metric-copy"><b>Что измеряет</b><p>Прямое геометрическое расстояние между двумя точками.</p></div>
           <div class="metric-copy"><b>Где используют</b><p>Поиск ближайших соседей, кластеризация и поиск аномалий, когда важно именно расстояние.</p></div>
           <div class="metric-rule"><span>↓</span><div><small>Интерпретация</small><strong>Чем меньше, тем ближе</strong></div></div>
         </article>
         <article>
-          <div class="metric-definition"><h3>Manhattan distance · L1</h3><code>d₁(A,B) = Σ|Aᵢ−Bᵢ|</code></div>
+          <div class="metric-visual">
+            <svg viewBox="0 0 200 130" role="img" aria-label="Manhattan distance — путь по горизонтали и вертикали">
+              <path class="metric-axis" d="M24 108H188M24 108V10"/><path class="metric-manhattan" d="M64 88H124V28"/>
+              <circle class="metric-point-a" cx="64" cy="88" r="5"/><circle class="metric-point-b" cx="124" cy="28" r="5"/>
+              <text class="metric-label-a" x="35" y="102">A(2,1)</text><text class="metric-label-b" x="131" y="30">B(5,4)</text><text class="metric-distance-label" x="77" y="82">3 + 3</text>
+            </svg>
+            <p>Идём по осям</p>
+          </div>
+          <div class="metric-definition"><h3>Manhattan distance · L1</h3><code>d₁(A,B) = |Aₓ−Bₓ| + |Aᵧ−Bᵧ|</code><code class="metric-calculation">= |2−5| + |1−4| = 3 + 3 = 6</code></div>
           <div class="metric-copy"><b>Что измеряет</b><p>Сумму абсолютных разниц по всем координатам.</p></div>
           <div class="metric-copy"><b>Где используют</b><p>Разреженные признаки и задачи, где нужно снизить влияние отдельных больших отклонений; для embeddings применяется реже.</p></div>
           <div class="metric-rule"><span>↓</span><div><small>Интерпретация</small><strong>Чем меньше, тем ближе</strong></div></div>
@@ -140,10 +187,54 @@
           <p class="map-note">Карта сжимает многомерные cosine-расстояния до двух осей.</p>
         </section>
       </div>
+
+      <div class="stage-action compact-action">
+        <p><b>Теперь сохраняем результат.</b> Те же три вектора отправятся в PostgreSQL и попадут в колонку <code>vector(1536)</code>.</p>
+        <button class="primary-button" id="store-button" type="button"><span>Сохранить в pgvector</span><b>→</b></button>
+      </div>
+      <div class="error-message" id="store-error" role="alert" hidden></div>
+    </section>
+
+    <section class="lab-stage store-stage" id="store" data-stage="4" hidden>
+      <header class="stage-heading">
+        <div><h2>PostgreSQL ищет ближайший смысл</h2></div>
+        <p>В таблице хранится исходный текст и его embedding. Новый запрос тоже превращается в вектор, после чего <code>pgvector</code> сортирует записи по cosine distance.</p>
+      </header>
+
+      <div class="storage-pipeline" aria-label="Пайплайн семантического поиска">
+        <article><b>01</b><span>Три документа</span><strong id="stored-count">3 строки</strong></article>
+        <i>→</i>
+        <article><b>02</b><span>Колонка PostgreSQL</span><strong>vector(1536)</strong></article>
+        <i>→</i>
+        <article><b>03</b><span>Cosine distance</span><strong>operator &lt;=&gt;</strong></article>
+      </div>
+
+      <div class="sql-callout">
+        <span>Запрос, который выполнит репозиторий</span>
+        <code>ORDER BY embedding &lt;=&gt; :query_vector LIMIT 3</code>
+      </div>
+
+      <div class="search-layout">
+        <form class="vector-search" id="vector-search-form">
+          <label for="search-query">Новая фраза — её ещё нет в базе</label>
+          <textarea id="search-query" maxlength="1000">Сотрудник хочет уйти в отпуск — какие документы оформить?</textarea>
+          <button class="primary-button" id="search-button" type="submit"><span>Найти похожие</span><b>→</b></button>
+        </form>
+
+        <section class="search-results-panel" aria-live="polite">
+          <div class="panel-heading">
+            <strong>Ближайшие записи</strong>
+            <small>similarity = 1 − cosine distance</small>
+          </div>
+          <div class="search-empty" id="search-empty">Введите запрос и запустите поиск.</div>
+          <div class="search-results" id="search-results"></div>
+        </section>
+      </div>
+      <div class="error-message" id="search-error" role="alert" hidden></div>
     </section>
   </main>
 
   <footer><span>EMBEDDING LAB</span><p>Следующая тема: как из этих векторов собирается RAG-пайплайн.</p></footer>
-  <script src="embeddings.js?v=20261018-1"></script>
+  <script src="embeddings.js?v=20261019-1"></script>
 </body>
 </html>

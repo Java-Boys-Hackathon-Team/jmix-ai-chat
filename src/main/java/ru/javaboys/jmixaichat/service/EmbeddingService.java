@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class EmbeddingDemoService {
+public class EmbeddingService {
 
     private final EmbeddingModel embeddingModel;
     private final String configuredModel;
 
-    public EmbeddingDemoService(
+    public EmbeddingService(
             EmbeddingModel embeddingModel,
             @Value("${spring.ai.openai.embedding.options.model}") String configuredModel) {
         this.embeddingModel = embeddingModel;
@@ -64,6 +64,23 @@ public class EmbeddingDemoService {
                 dimensions,
                 response.getMetadata().getUsage().getPromptTokens(),
                 vectors);
+    }
+
+    public QueryEmbedding embedQuery(String text) {
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("Введите поисковый запрос");
+        }
+        EmbeddingResponse response = embeddingModel.embedForResponse(List.of(text));
+        if (response.getResults().size() != 1) {
+            throw new IllegalStateException("Embedding-модель вернула неожиданный ответ для запроса");
+        }
+        float[] embedding = response.getResults().getFirst().getOutput();
+        if (embedding.length == 0) {
+            throw new IllegalStateException("Embedding-модель вернула пустой вектор");
+        }
+        String responseModel = response.getMetadata().getModel();
+        String model = responseModel == null || responseModel.isBlank() ? configuredModel : responseModel;
+        return new QueryEmbedding(model, embedding);
     }
 
     public List<Comparison> compare(List<VectorInfo> vectors) {
@@ -211,5 +228,8 @@ public class EmbeddingDemoService {
             double euclideanDistance,
             double manhattanDistance,
             String description) {
+    }
+
+    public record QueryEmbedding(String model, float[] values) {
     }
 }
